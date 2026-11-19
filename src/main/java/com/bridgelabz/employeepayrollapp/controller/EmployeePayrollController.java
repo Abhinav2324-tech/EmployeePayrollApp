@@ -43,14 +43,14 @@ public class EmployeePayrollController {
                 employeePayrollService.createEmployeePayrollData(request)));
     }
 
-    @PutMapping("/update")
+    @PutMapping("/update/{empId}")
     public ResponseEntity<ResponseDTO> updateEmployeePayrollData(
+            @PathVariable("empId") int empId,
             @RequestBody EmployeePayrollDTO request) {
         return ResponseEntity.ok(new ResponseDTO(
                 "Updated Employee Payroll Data",
-                employeePayrollService.updateEmployeePayrollData(request)));
+                employeePayrollService.updateEmployeePayrollData(empId, request)));
     }
-
     @DeleteMapping("/delete/{empId}")
     public ResponseEntity<ResponseDTO> deleteEmployeePayrollData(
             @PathVariable("empId") int empId) {
