@@ -2,37 +2,67 @@ package com.bridgelabz.employeepayrollapp.service;
 
 import com.bridgelabz.employeepayrollapp.dto.EmployeePayrollDTO;
 import com.bridgelabz.employeepayrollapp.model.EmployeePayrollData;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds payroll data for the controller without storing records yet.
+ * Stores employee payroll records in memory while the application runs.
  */
 @Service
-public class EmployeePayrollService implements IEmployeePayrollService {
+public  class EmployeePayrollService implements IEmployeePayrollService {
+
+    private final List<EmployeePayrollData> employees = new ArrayList<>();
+    private int nextEmployeeId = 1;
 
     @Override
-    public List<EmployeePayrollData> getEmployeePayrollData() {
-        return List.of(getEmployeePayrollDataById(1));
+    public synchronized List<EmployeePayrollData> getEmployeePayrollData() {
+        return List.copyOf(employees);
     }
 
     @Override
-    public EmployeePayrollData getEmployeePayrollDataById(int empId) {
-        return new EmployeePayrollData(empId, "Pankaj", 30000);
+    public synchronized EmployeePayrollData getEmployeePayrollDataById(int empId) {
+        return employees.get(findEmployeeIndex(empId));
     }
 
     @Override
-    public EmployeePayrollData createEmployeePayrollData(EmployeePayrollDTO request) {
-        return new EmployeePayrollData(1, request);
+    public synchronized EmployeePayrollData createEmployeePayrollData(
+            EmployeePayrollDTO request) {
+        EmployeePayrollData employee = new EmployeePayrollData(nextEmployeeId++, request);
+        employees.add(employee);
+        return employee;
     }
 
     @Override
-    public EmployeePayrollData updateEmployeePayrollData(EmployeePayrollDTO request) {
-        return new EmployeePayrollData(1, request);
+    public synchronized EmployeePayrollData updateEmployeePayrollData(
+            int empId, EmployeePayrollDTO request) {
+        int index = findEmployeeIndex(empId);
+        EmployeePayrollData updatedEmployee = new EmployeePayrollData(empId, request);
+        employees.set(index, updatedEmployee);
+        return updatedEmployee;
     }
 
     @Override
-    public void deleteEmployeePayrollData(int empId) {
-        // Nothing to remove until we add in-memory storage in UC 3.
+    public synchronized void deleteEmployeePayrollData(int empId) {
+        employees.remove(findEmployeeIndex(empId));
+    }
+
+    @Override
+    public Object updateEmployeePayrollData(EmployeePayrollDTO request) {
+        return null;
+    }
+
+    private int findEmployeeIndex(int empId) {
+        for (int i = 0; i < employees.size(); i++) {
+            if (employees.get(i).getEmployeeId() == empId) {
+                return i;
+            }
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Employee not found with ID " + empId);
     }
 }
